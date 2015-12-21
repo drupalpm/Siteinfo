@@ -1,0 +1,63 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function custom_siteinfo_menu() {
+  $items = array();
+  
+  $items['json/%/%'] = array(
+    'page callback' => 'custom_siteinfo_create_json',
+    'page arguments' => array(1,2),
+    'access callback' => 'custom_siteinfo_verify_key',
+    'access arguments' => array(1,2),
+    'file' => 'custom_siteinfo.pages.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/*
+ * @params: $id : keyid 
+ */
+function custom_siteinfo_verify_key($nid, $key) {
+  $access = FALSE;
+  
+  $node_type = db_query("SELECT type FROM {node} WHERE nid = :nid", array(':nid'=>$nid))->fetchField();
+  if (variable_get('site_info_api_key') == $key && $node_type == 'page'){   
+   $access = TRUE;
+  }
+  
+  return $access;  
+}
+
+/**
+ * hook_form_alter().
+ */
+function custom_siteinfo_form_alter(&$form, $form_state, $form_id){ 
+  if ($form_id == 'system_site_information_settings'){
+   $form['site_info_api_key'] = array(
+    '#title'=>'Site API Key',
+    '#type'=>'textfield',
+    '#default_value'=>variable_get('site_info_api_key', 'No API Key yet'),
+   );
+  
+   if (variable_get('site_info_api_key') != '' && variable_get('site_info_api_key') != 'No API Key yet'){
+	 $form['actions']['submit']['#value'] = 'Update Configuration';
+   }
+  
+   $form['#submit'][] = 'custom_siteinfo_save_api_key';
+  } 
+}
+
+/**
+ * Submit hook_form_submit().
+ */
+function custom_siteinfo_save_api_key($form, $form_state){
+  $field_value = $form_state['values']['site_info_api_key'];
+  variable_set('site_info_api_key', $field_value);
+  if (variable_get('site_info_api_key') != '' && variable_get('site_info_api_key') != 'No API Key yet'){
+    drupal_set_message(t('Site API Key has been saved with the value %value', array('%value'=>$field_value)));
+  } 
+}

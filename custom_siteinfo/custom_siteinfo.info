@@ -1,0 +1,5 @@
+name = Customization of Site Information
+description = Alter siteinformation and create a JSON OF GIVEN node
+package = Custom
+core = 7.x
+version = "7.x-0"
